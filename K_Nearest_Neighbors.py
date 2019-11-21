@@ -50,9 +50,31 @@ def getLabel(nearest_neighbors):
         else:
             d[labels[i]] = 1
     max_val = max(d.values())
-    label = [key for key,val in d.items() if val==max_val]
+    for key,val in d.items():
+        if val==max_val:
+            label = key
+    # label = [key for key,val in d.items() if val==max_val]
     return label
 
+def metric_computation(validation_labels,predicted_labels):
+    tp,tn,fp,fn = 0.0,0.0,0.0,0.0
+    for i in range(len(validation_labels)):
+        if(validation_labels[i]==1.0 and predicted_labels[i]==1.0):
+            tp += 1
+        elif(validation_labels[i]==0.0 and predicted_labels[i]==1.0):
+            fp += 1
+        elif(validation_labels[i]==0.0 and predicted_labels[i]==0.0):
+            tn += 1
+        else:
+            fn += 1
+    
+    accuracy = (tp+tn)/(tp+tn+fp+fn)
+    precision = tp/(tp+fp)
+    recall = tp/(tp+fn)
+    fmeasure = (2*recall*precision)/(recall+precision)
+
+    return accuracy,precision,recall,fmeasure
+        
 # Step 6
 def compute_knn(normalized_training_data,test_data,mean,std_deviation,K):
     dist = []
@@ -81,7 +103,9 @@ def knn_metrics(training_data,validation_data,K):
     for i in range(len(validation_data)):
         label = compute_knn(normalized_training_data,validation_data[i],mean,std_deviation,K)
         predicted_labels.append(label)
-    print(len(predicted_labels),len(validation_labels))
+    
+    accuracy,precision,recall,fmeasure = metric_computation(validation_labels,predicted_labels)
+    return accuracy,precision,recall,fmeasure
 # Step 3
 def kFoldCrossValidation(numFolds,data,K):
     foldSize = len(data)/numFolds
@@ -90,11 +114,18 @@ def kFoldCrossValidation(numFolds,data,K):
     recall_list = []
     fmeasure_list = []
     index = 0
-    for i in range(0,numFolds):
+    for i in range(numFolds):
         training_data,validation_data = splitData(index,data,foldSize)
         index += foldSize
-        knn_metrics(training_data,validation_data,K)
-        break
+        accuracy,precision,recall,fmeasure = knn_metrics(training_data,validation_data,K)
+        accuracy_list.append(accuracy)
+        precision_list.append(precision)
+        recall_list.append(recall)
+        fmeasure_list.append(fmeasure)
+    print("Accuracy: ", np.mean(accuracy_list))
+    print("Precision: ", np.mean(precision_list))
+    print("Recall: ", np.mean(recall_list))
+    print("F-measure:  ",np.mean(fmeasure_list))
 
 # Getting input 
 fileName = sys.argv[1]
