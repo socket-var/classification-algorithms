@@ -1,6 +1,7 @@
 import numpy as np 
 import math
 import sys
+from scipy.spatial import distance
 
 def isFloat(val):
     try:
@@ -34,6 +35,23 @@ def normalizeData(mean,std_deviation,dataset,training_labels):
         dataset[i] = normalized
     return dataset
 
+def getLabel(nearest_neighbors):
+    # Find labels of nearest neighbors and assign label to most commonly occuring label.
+
+def compute_knn(normalized_training_data,test_data,mean,std_deviation,K):
+    dist = []
+    nearest_neighbors = []
+    length = len(normalized_training_data[0])
+    normalized_test_data = (test_data[:len(test_data)-1]-mean)/std_deviation
+    for i in range(len(normalized_training_data)):
+        dist.append((normalized_training_data[i],distance.euclidean(normalized_test_data,normalized_training_data[i][:length-1])))
+    dist.sort(key = lambda x:x[1])
+
+    for i in range(K):
+        nearest_neighbors.append(dist[i][0])
+    label = getLabel(nearest_neighbors)
+    return label
+
 def knn_metrics(training_data,validation_data,K):
     dataset = [line[0:-1] for line in training_data]
     training_labels = [line[-1] for line in training_data]
@@ -42,8 +60,11 @@ def knn_metrics(training_data,validation_data,K):
 
     mean = np.mean(dataset,axis=0)
     std_deviation = np.std(dataset,axis=0)
+    normalized_training_data = normalizeData(mean,std_deviation,dataset,training_labels)
 
-    normalized_data = normalizeData(mean,std_deviation,dataset,training_labels)
+    for i in range(len(validation_data)):
+        label = compute_knn(normalized_training_data,validation_data[i],mean,std_deviation,K)
+        predicted_labels.append(label)
 
 def kFoldCrossValidation(numFolds,data,K):
     foldSize = len(data)/numFolds
