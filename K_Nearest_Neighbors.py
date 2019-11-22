@@ -3,7 +3,7 @@ import math
 import sys
 from scipy.spatial import distance
 
-# Step 2
+# Check if float or not
 def isFloat(val):
     try:
         val = float(val)
@@ -11,7 +11,7 @@ def isFloat(val):
     except ValueError:
         return False
 
-# Step 1
+# Get data from file and convert to float
 def getData(fileName):
     data = []
     with open(fileName) as textFile:
@@ -22,22 +22,31 @@ def getData(fileName):
     
     # Not clear about what to do for string values.
     return data
-# Step 4
+
+# Split data into training and validation data.
 def splitData(index,data,foldSize):
     start = index
     end = index + foldSize
     training_data = data[:start] + data[end:]
     validation_data = data[start:end]
     return training_data,validation_data
-# Step 6
-def normalizeData(mean,std_deviation,dataset,training_labels):
-    # Have to check normalization
-    for i in range(len(dataset)):
-        normalized = ((dataset[i]-mean)/std_deviation).tolist()
-        normalized.append(training_labels[i])
-        dataset[i] = normalized
-    return dataset
 
+# Normalize training data
+def normalizeData(min_vals,max_vals,dataset,training_labels):
+    # Have to check normalization
+    temp = len(dataset[0])
+    for i in range(len(dataset)):
+        for j in range(temp):
+            dataset[i][j] = (dataset[i][j] - min_vals[j])/(max_vals[j]-min_vals[j])
+        dataset[i].append(training_labels[i])
+    return dataset
+    # for i in range(len(dataset)):
+    #     normalized = ((dataset[i]-mean)/std_deviation).tolist()
+    #     normalized.append(training_labels[i])
+    #     dataset[i] = normalized
+    # return dataset
+
+# Get the labels of the K-nearest neighbors and then assign label based on maximum occuring label.
 def getLabel(nearest_neighbors):
     # Find labels of nearest neighbors and assign label to most commonly occuring label.
     labels = [x[-1] for x in nearest_neighbors]
@@ -56,6 +65,7 @@ def getLabel(nearest_neighbors):
     # label = [key for key,val in d.items() if val==max_val]
     return label
 
+# Compute the different metrics for evaluation.
 def metric_computation(validation_labels,predicted_labels):
     tp,tn,fp,fn = 0.0,0.0,0.0,0.0
     for i in range(len(validation_labels)):
@@ -75,12 +85,16 @@ def metric_computation(validation_labels,predicted_labels):
 
     return accuracy,precision,recall,fmeasure
         
-# Step 6
-def compute_knn(normalized_training_data,test_data,mean,std_deviation,K):
+# Generate the K-nearest neighbors based on Euclidean distance.
+def compute_knn(normalized_training_data,test_data,validation_min_vals,validation_max_vals,K):
     dist = []
     nearest_neighbors = []
     length = len(normalized_training_data[0])
-    normalized_test_data = (test_data[:len(test_data)-1]-mean)/std_deviation
+    normalized_test_data = []
+    for j in range(len(test_data[:-1])):
+        val = (test_data[j]-validation_min_vals[j])/(validation_max_vals[j]-validation_min_vals[j])
+        normalized_test_data.append(val)
+    # normalized_test_data = (test_data[:len(test_data)-1]-mean)/std_deviation
     for i in range(len(normalized_training_data)):
         dist.append((normalized_training_data[i],distance.euclidean(normalized_test_data,normalized_training_data[i][:length-1])))
     dist.sort(key = lambda x:x[1])
@@ -89,24 +103,40 @@ def compute_knn(normalized_training_data,test_data,mean,std_deviation,K):
         nearest_neighbors.append(dist[i][0])
     label = getLabel(nearest_neighbors)
     return label
-# Step 5
+
+# 
 def knn_metrics(training_data,validation_data,K):
     dataset = [line[0:-1] for line in training_data]
     training_labels = [line[-1] for line in training_data]
     validation_labels = [line[-1] for line in validation_data]
     predicted_labels = []
-
-    mean = np.mean(dataset,axis=0)
-    std_deviation = np.std(dataset,axis=0)
-    normalized_training_data = normalizeData(mean,std_deviation,dataset,training_labels)
+    # mean = np.mean(dataset,axis=0)
+    # std_deviation = np.std(dataset,axis=0)
+    training_min_vals = []
+    training_max_vals = []
+    dataset_temp = zip(*dataset)
+    for row in dataset_temp:
+        training_min_vals.append(min(row))
+        training_max_vals.append(max(row))
+    
+    normalized_training_data = normalizeData(training_min_vals,training_max_vals,dataset,training_labels)
+    # print("Normalized")
+    # print(normalized_training_data)
+    validation_min_vals = []
+    validation_max_vals = []
+    validation_data_temp = zip(*validation_data)[:-1]
+    for row in validation_data_temp:
+        validation_min_vals.append(min(row))
+        validation_max_vals.append(max(row))
 
     for i in range(len(validation_data)):
-        label = compute_knn(normalized_training_data,validation_data[i],mean,std_deviation,K)
+        label = compute_knn(normalized_training_data,validation_data[i],validation_min_vals,validation_max_vals,K)
         predicted_labels.append(label)
     
     accuracy,precision,recall,fmeasure = metric_computation(validation_labels,predicted_labels)
     return accuracy,precision,recall,fmeasure
-# Step 3
+
+# k-fold cross validation for averaging the results from randomization.
 def kFoldCrossValidation(numFolds,data,K):
     foldSize = len(data)/numFolds
     accuracy_list = []
@@ -122,6 +152,7 @@ def kFoldCrossValidation(numFolds,data,K):
         precision_list.append(precision)
         recall_list.append(recall)
         fmeasure_list.append(fmeasure)
+    
     print("Accuracy: ", np.mean(accuracy_list))
     print("Precision: ", np.mean(precision_list))
     print("Recall: ", np.mean(recall_list))
