@@ -22,6 +22,77 @@ def normalizeData(data,norm_min,norm_max,columnLabels):
 		normalizedData.append(normRow)
 	return normalizedData
 
+## Get class probalbilities
+def calculatePriorProbability(normalizedData):
+	classColumn = []
+	positveCount = 0
+	negativeCount = 0
+	classIndex = len(normalizedData[0])-1
+	for row in normalizedData:
+		classColumn.append(row[classIndex])
+	for val in classColumn:
+		if(val == 1):
+			positveCount+=1
+		else:
+			negativeCount+=1
+	return positveCount/len(normalizedData),negativeCount/len(normalizedData),classColumn
+
+## Get Posterior Mean for numerical columns
+def calculatePosteriorMean(normalizedData,columnLabels,classColumn):
+	posteriorPositiveMean = []
+	posteriorNegativeMean = []
+	positiveCount = 0
+	negativeCount = 0
+	for val in classColumn:
+		if val == 1:
+			positiveCount+=1
+		else:
+			negativeCount+=1
+	for i in range(0,len(normalizedData[0])-1):
+		if(columnLabels[i] == "Numerical"):
+			positiveSum=0
+			negativeSum=0
+			for j in range(0,len(normalizedData)):
+				if(classColumn[j] == 1):
+					positiveSum+=normalizedData[j][i]
+				else:
+					negativeSum+=normalizedData[j][i]
+			posteriorPositiveMean.append(positiveSum/positiveCount)
+			posteriorNegativeMean.append(negativeSum/negativeCount)
+		else:
+			posteriorPositiveMean.append("NaN")
+			posteriorNegativeMean.append("NaN")
+	return posteriorPositiveMean,posteriorNegativeMean
+
+## Get Posterior Standard deviation for numerical columns
+def calculatePosteriorStandardDeviation(normalizedData,posteriorPositiveMean,posteriorNegativeMean,columnLabels,classColumn):
+	posteriorPositiveStd = []
+	posteriorNegativeStd = []
+	positiveCount = 0
+	negativeCount = 0
+	for val in classColumn:
+		if val == 1:
+			positiveCount+=1
+		else:
+			negativeCount+=1
+	positiveCount = positiveCount-1
+	negativeCount = negativeCount-1
+	for i in range(0,len(normalizedData[0])-1):
+		if(columnLabels[i] == "Numerical"):
+			positiveSum = 0
+			negativeSum = 0
+			for j in range(0,len(normalizedData)):
+				if(classColumn[j] == 1):
+					positiveSum+= (normalizedData[j][i] - posteriorPositiveMean[i])**2
+				else:
+					negativeSum+= (normalizedData[j][i] - posteriorNegativeMean[i])**2
+			posteriorPositiveStd.append(positiveSum/positiveCount)
+			posteriorNegativeStd.append(negativeSum/negativeCount)
+		else:
+			posteriorPositiveStd.append("NaN")
+			posteriorNegativeStd.append("NaN")
+	return posteriorPositiveStd,posteriorNegativeStd
+
 
 filename = sys.argv[1]
 data = []
@@ -57,6 +128,13 @@ for i in range(0,len(columnLabels)):
 		norm_max.append("Categorical")
 
 normalizedData = normalizeData(data,norm_min,norm_max,columnLabels)
+positivePrior,negativePrior,classColumn = calculatePriorProbability(normalizedData)
+posteriorPositiveMean,posteriorNegativeMean = calculatePosteriorMean(normalizedData,columnLabels,classColumn)
+posteriorPositiveStd,posteriorNegativeStd = calculatePosteriorStandardDeviation(normalizedData,posteriorPositiveMean,posteriorNegativeMean,columnLabels,classColumn)
+print(posteriorPositiveStd)
+print(posteriorNegativeStd)
+
+
 
 
 
