@@ -1,6 +1,7 @@
 import sys
 import csv
 import math
+import numpy as np
 import scipy.stats as s
 
 ## Checks if given string is a number
@@ -124,18 +125,34 @@ def kFoldCrossValidation(numFolds,data,columnLabels):
 		posteriorPositiveMean,posteriorNegativeMean = calculatePosteriorMean(normalizedTrainingData,columnLabels,classColumn)
 		posteriorPositiveStd,posteriorNegativeStd = calculatePosteriorStandardDeviation(normalizedTrainingData,posteriorPositiveMean,posteriorNegativeMean,columnLabels,classColumn)
 		prediction,groundTruth = predictClass(normalizedTrainingData,normalizedValidationData,positivePrior,negativePrior,posteriorPositiveMean,posteriorNegativeMean,posteriorPositiveStd,posteriorNegativeStd,columnLabels,classColumn)
-		print(prediction)
+		#print(prediction)
+		#print(groundTruth)
+		accuracy,precision,recall,fmeasure = metric_computation(groundTruth,prediction)
+		accuracy_list.append(accuracy)
+		precision_list.append(precision)
+		recall_list.append(recall)
+		fmeasure_list.append(fmeasure)
+		#print(accuracy,precision,recall,fmeasure)
+	print("Accuracy: ", np.mean(accuracy_list))
+	print("Precision: ", np.mean(precision_list))
+	print("Recall: ", np.mean(recall_list))
+	print("F-measure:  ",np.mean(fmeasure_list))
 
 # Predicts the class depending on probability
 def predictClass(Tdata,Vdata,pPrior,nPrior,pMean,nMean,pStd,nStd,columnLabels,classColumn):
 	groundTruth = []
-	print(Tdata[0])
-	for i in range(0,len(data)):
-		groundTruth.append(Tdata[i][-1])
-		query = Tdata[i][0:-1]
+	prediction = []
+	#print(Tdata[0])
+	for i in range(0,len(Vdata)):
+		groundTruth.append(Vdata[i][-1])
+		query = Vdata[i][0:-1]
 		positiveClassProbability = calculateClassConditionalProbability(query,Tdata,pPrior,pMean,pStd,columnLabels,classColumn,1)
 		negativeClassProbability = calculateClassConditionalProbability(query,Tdata,nPrior,nMean,nStd,columnLabels,classColumn,0)
-
+		if(positiveClassProbability>= negativeClassProbability):
+			prediction.append(1.0)
+		else:
+			prediction.append(0.0)
+	return prediction,groundTruth
 
 def calculateClassConditionalProbability(query,Tdata,prior,postMean,postStd,columnLabels,classColumn,classFlag):
 	posteriorProbabilities = []
@@ -147,8 +164,12 @@ def calculateClassConditionalProbability(query,Tdata,prior,postMean,postStd,colu
 			for j in range(0,len(Tdata)):
 				trainColumn.append(Tdata[j][i])
 			posteriorProbabilities.append(calculateCategoricalProbability(query[i],trainColumn,classColumn,classFlag))
-	print(posteriorProbabilities)
-	raise NotImplementedError
+	#print(posteriorProbabilities)
+	prob = prior
+	for i in range(0,len(posteriorProbabilities)):
+		prob = prob*posteriorProbabilities[i]
+	return prob
+
 
 def calculateNumericalProbability(columnVal,mean,std):
 	#print(columnVal,mean,std)
@@ -176,6 +197,25 @@ def splitData(index,data,foldSize):
 	training_data = data[:start] + data[end:]
 	validation_data = data[start:end]
 	return training_data,validation_data
+
+# Compute the different metrics for evaluation.
+def metric_computation(validation_labels,predicted_labels):
+	tp,tn,fp,fn = 0.0,0.0,0.0,0.0
+	for i in range(len(validation_labels)):
+		if(validation_labels[i]==1.0 and predicted_labels[i]==1.0):
+			tp += 1
+		elif(validation_labels[i]==0.0 and predicted_labels[i]==1.0):
+			fp += 1
+		elif(validation_labels[i]==0.0 and predicted_labels[i]==0.0):
+			tn += 1
+		else:
+			fn += 1
+	
+	accuracy = (tp+tn)/(tp+tn+fp+fn)
+	precision = tp/(tp+fp)
+	recall = tp/(tp+fn)
+	fmeasure = (2*recall*precision)/(recall+precision)
+	return accuracy,precision,recall,fmeasure
 
 filename = sys.argv[1]
 numFolds = int(sys.argv[2])
