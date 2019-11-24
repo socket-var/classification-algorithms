@@ -93,8 +93,70 @@ def calculatePosteriorStandardDeviation(normalizedData,posteriorPositiveMean,pos
 			posteriorNegativeStd.append("NaN")
 	return posteriorPositiveStd,posteriorNegativeStd
 
+# k-fold cross validation for averaging the results from randomization.
+def kFoldCrossValidation(numFolds,data,columnLabels):
+	foldSize = int(len(data)/numFolds)
+	accuracy_list = []
+	precision_list = []
+	recall_list = []
+	fmeasure_list = []
+	index = 0
+	for i in range(numFolds):
+		training_data,validation_data = splitData(index,data,foldSize)
+		index += foldSize
+		norm_max = []
+		norm_min = []
+		for i in range(0,len(columnLabels)):
+			if(columnLabels[i] == "Numerical"):
+				temp = [row[i] for row in training_data]
+				norm_min.append(min(temp))
+				norm_max.append(max(temp))
+			else:
+				norm_min.append("Categorical")
+				norm_max.append("Categorical")
+		normalizedTrainingData = normalizeData(training_data,norm_min,norm_max,columnLabels)
+		normalizedValidationData = normalizeData(validation_data,norm_min,norm_max,columnLabels)
+		positivePrior,negativePrior,classColumn = calculatePriorProbability(normalizedTrainingData)
+		posteriorPositiveMean,posteriorNegativeMean = calculatePosteriorMean(normalizedTrainingData,columnLabels,classColumn)
+		posteriorPositiveStd,posteriorNegativeStd = calculatePosteriorStandardDeviation(normalizedTrainingData,posteriorPositiveMean,posteriorNegativeMean,columnLabels,classColumn)
+		prediction,groundTruth = predictClass(normalizedTrainingData,normalizedValidationData,positivePrior,negativePrior,posteriorPositiveMean,posteriorNegativeMean,posteriorPositiveStd,posteriorNegativeStd,columnLabels,classColumn)
+		print(prediction)
+		raise NotImplementedError
+
+# Predicts the class depending on probability
+def predictClass(Tdata,Vdata,pPrior,nPrior,pMean,nMean,pStd,nStd,columnLabels,classColumn):
+	groundTruth = []
+	print(Tdata[0])
+	raise NotImplementedError
+	for i in range(0,len(data)):
+		groundTruth.append(data[i][-1])
+		query = data[i][0:-1]
+		positiveClassProbability = calculateClassConditionalProbability(query,Tdata,pPrior,pMean,pStd,columnLabels,classColumn)
+		negativeClassProbability = calculateClassConditionalProbability(query,Tdata,nPrior,nMean,nStd,columnLabels,classColumn)
+
+
+def calculateClassConditionalProbability(query,Tdata,prior,postMean,postStd,columnLabels,classColumn):
+	posteriorProbabilities = []
+	for i in range(0,len(query)):
+		if(classColumn[i] == "Numerical"):
+			posteriorProbabilities.append(calculateNumericalProbability(query[i],postMean[i],postStd))
+		else:
+			posteriorProbabilities.append(calculateCategoricalProbability(query[i],Tdata,classColumn))
+
+# def calculateNumercialProbability(columnVal,mean,std):
+
+# def calculateCategoricalProbability(columnVal,Tdata,classColumn):
+
+# Split data into training and validation data.
+def splitData(index,data,foldSize):
+	start = index
+	end = index + foldSize
+	training_data = data[:start] + data[end:]
+	validation_data = data[start:end]
+	return training_data,validation_data
 
 filename = sys.argv[1]
+numFolds = int(sys.argv[2])
 data = []
 rowCount = 0
 
@@ -115,24 +177,13 @@ for i in range(0,len(sampleData)-1):
 		columnLabels.append("Numerical")
 columnLabels.append("Class")
 
-norm_min = []
-norm_max = []
+kFoldCrossValidation(numFolds,data,columnLabels)
 
-for i in range(0,len(columnLabels)):
-	if(columnLabels[i] == "Numerical"):
-		temp = [row[i] for row in data]
-		norm_min.append(min(temp))
-		norm_max.append(max(temp))
-	else:
-		norm_min.append("Categorical")
-		norm_max.append("Categorical")
+# normalizedData = normalizeData(data,norm_min,norm_max,columnLabels)
+# positivePrior,negativePrior,classColumn = calculatePriorProbability(normalizedData)
+# posteriorPositiveMean,posteriorNegativeMean = calculatePosteriorMean(normalizedData,columnLabels,classColumn)
+# posteriorPositiveStd,posteriorNegativeStd = calculatePosteriorStandardDeviation(normalizedData,posteriorPositiveMean,posteriorNegativeMean,columnLabels,classColumn)
 
-normalizedData = normalizeData(data,norm_min,norm_max,columnLabels)
-positivePrior,negativePrior,classColumn = calculatePriorProbability(normalizedData)
-posteriorPositiveMean,posteriorNegativeMean = calculatePosteriorMean(normalizedData,columnLabels,classColumn)
-posteriorPositiveStd,posteriorNegativeStd = calculatePosteriorStandardDeviation(normalizedData,posteriorPositiveMean,posteriorNegativeMean,columnLabels,classColumn)
-print(posteriorPositiveStd)
-print(posteriorNegativeStd)
 
 
 
