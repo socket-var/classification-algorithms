@@ -1,5 +1,7 @@
 import sys
 import csv
+import math
+import scipy.stats as s
 
 ## Checks if given string is a number
 def isNum(s):
@@ -86,8 +88,8 @@ def calculatePosteriorStandardDeviation(normalizedData,posteriorPositiveMean,pos
 					positiveSum+= (normalizedData[j][i] - posteriorPositiveMean[i])**2
 				else:
 					negativeSum+= (normalizedData[j][i] - posteriorNegativeMean[i])**2
-			posteriorPositiveStd.append(positiveSum/positiveCount)
-			posteriorNegativeStd.append(negativeSum/negativeCount)
+			posteriorPositiveStd.append(math.sqrt(positiveSum/positiveCount))
+			posteriorNegativeStd.append(math.sqrt(negativeSum/negativeCount))
 		else:
 			posteriorPositiveStd.append("NaN")
 			posteriorNegativeStd.append("NaN")
@@ -114,38 +116,58 @@ def kFoldCrossValidation(numFolds,data,columnLabels):
 			else:
 				norm_min.append("Categorical")
 				norm_max.append("Categorical")
-		normalizedTrainingData = normalizeData(training_data,norm_min,norm_max,columnLabels)
-		normalizedValidationData = normalizeData(validation_data,norm_min,norm_max,columnLabels)
+		#normalizedTrainingData = normalizeData(training_data,norm_min,norm_max,columnLabels)
+		#normalizedValidationData = normalizeData(validation_data,norm_min,norm_max,columnLabels)
+		normalizedTrainingData = training_data
+		normalizedValidationData = validation_data
 		positivePrior,negativePrior,classColumn = calculatePriorProbability(normalizedTrainingData)
 		posteriorPositiveMean,posteriorNegativeMean = calculatePosteriorMean(normalizedTrainingData,columnLabels,classColumn)
 		posteriorPositiveStd,posteriorNegativeStd = calculatePosteriorStandardDeviation(normalizedTrainingData,posteriorPositiveMean,posteriorNegativeMean,columnLabels,classColumn)
 		prediction,groundTruth = predictClass(normalizedTrainingData,normalizedValidationData,positivePrior,negativePrior,posteriorPositiveMean,posteriorNegativeMean,posteriorPositiveStd,posteriorNegativeStd,columnLabels,classColumn)
 		print(prediction)
-		raise NotImplementedError
 
 # Predicts the class depending on probability
 def predictClass(Tdata,Vdata,pPrior,nPrior,pMean,nMean,pStd,nStd,columnLabels,classColumn):
 	groundTruth = []
 	print(Tdata[0])
-	raise NotImplementedError
 	for i in range(0,len(data)):
-		groundTruth.append(data[i][-1])
-		query = data[i][0:-1]
-		positiveClassProbability = calculateClassConditionalProbability(query,Tdata,pPrior,pMean,pStd,columnLabels,classColumn)
-		negativeClassProbability = calculateClassConditionalProbability(query,Tdata,nPrior,nMean,nStd,columnLabels,classColumn)
+		groundTruth.append(Tdata[i][-1])
+		query = Tdata[i][0:-1]
+		positiveClassProbability = calculateClassConditionalProbability(query,Tdata,pPrior,pMean,pStd,columnLabels,classColumn,1)
+		negativeClassProbability = calculateClassConditionalProbability(query,Tdata,nPrior,nMean,nStd,columnLabels,classColumn,0)
 
 
-def calculateClassConditionalProbability(query,Tdata,prior,postMean,postStd,columnLabels,classColumn):
+def calculateClassConditionalProbability(query,Tdata,prior,postMean,postStd,columnLabels,classColumn,classFlag):
 	posteriorProbabilities = []
 	for i in range(0,len(query)):
-		if(classColumn[i] == "Numerical"):
-			posteriorProbabilities.append(calculateNumericalProbability(query[i],postMean[i],postStd))
+		if(columnLabels[i] == "Numerical"):
+			posteriorProbabilities.append(calculateNumericalProbability(query[i],postMean[i],postStd[i]))
 		else:
-			posteriorProbabilities.append(calculateCategoricalProbability(query[i],Tdata,classColumn))
+			trainColumn = []
+			for j in range(0,len(Tdata)):
+				trainColumn.append(Tdata[j][i])
+			posteriorProbabilities.append(calculateCategoricalProbability(query[i],trainColumn,classColumn,classFlag))
+	print(posteriorProbabilities)
+	raise NotImplementedError
 
-# def calculateNumercialProbability(columnVal,mean,std):
+def calculateNumericalProbability(columnVal,mean,std):
+	#print(columnVal,mean,std)
+	# a = 1/(math.sqrt(2)*math.sqrt(math.pi)*std)
+	# b = math.exp(-1*(math.pow((columnVal-mean),2)/(2*math.pow(std,2))))
+	# print(a,b)
+	# return a*b
+	return s.norm(mean,std).pdf(columnVal)
 
-# def calculateCategoricalProbability(columnVal,Tdata,classColumn):
+def calculateCategoricalProbability(columnVal,trainColumn,classColumn,catFlag):
+	count = 0
+	totalCount = 0
+	for i in range(0,len(classColumn)):
+		if(classColumn[i] == catFlag):
+			totalCount+=1
+	for i in range(0,len(trainColumn)):
+		if(classColumn[i] == catFlag and columnVal == trainColumn[i]):
+			count+=1
+	return count/totalCount
 
 # Split data into training and validation data.
 def splitData(index,data,foldSize):
