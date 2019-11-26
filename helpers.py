@@ -29,9 +29,9 @@ def gini(rows):
     return impurity
 
 
-def info_gain(left, right, parent_gini):
-    p = float(len(left)) / (len(left) + len(right))
-    return parent_gini - p * gini(left) - (1 - p) * gini(right)
+def info_gain(true_subset, false_subset, parent_gini):
+    p = len(true_subset) / float(len(true_subset) + len(false_subset))
+    return parent_gini - p * gini(true_subset) - (1 - p) * gini(false_subset)
 
 
 def metric_computation(validation_labels, predicted_labels):
