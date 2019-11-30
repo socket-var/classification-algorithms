@@ -13,27 +13,27 @@ def read_csv(file_name, remove_header=None):
     return np.array(data.iloc[:, 1:].copy())
 
 
-def kfold_stratified_split(X, y, k, standardize_flag):
+def kfold_stratified_split(X, y, k, standardize_flag=False, random_state=42):
 
-    skf = StratifiedKFold(n_splits=k, shuffle=True, random_state=42)
+    skf = StratifiedKFold(n_splits=k, shuffle=True, random_state=random_state)
 
     splits = []
 
     for train, test in skf.split(X, y):
         new_X = X[train, :].copy()
         new_y = y[train, :].copy()
-        
+
         new_X_test = X[test, :].copy()
         new_y_test = y[test, :].copy()
-        if(standardize_flag):
-            new_X,new_X_test = standardize_data(new_X,new_X_test)
+        if standardize_flag:
+            new_X, new_X_test = standardize_data(new_X, new_X_test)
         splits.append([(new_X, new_y), (new_X_test, new_y_test)])
 
     return splits
 
-def standardize_data(X_train,X_test):
+
+def standardize_data(X_train, X_test):
     scaler = preprocessing.StandardScaler().fit(X_train)
     X_train_standardized = scaler.transform(X_train)
     X_test_standardized = scaler.transform(X_test)
-    return X_train_standardized,X_test_standardized
-    
+    return X_train_standardized, X_test_standardized
