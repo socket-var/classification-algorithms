@@ -11,7 +11,7 @@ if __name__ == "__main__":
     # max_depth = input("Enter maximum depth of the trees: ")
     # k_folds = input("Enter numbe rof folds for validation: ")
 
-    file_name = "project3_dataset2.txt"
+    file_name = "project3_dataset1.txt"
     n_estimators = 3
     n_features = None
     max_depth = None
@@ -23,6 +23,8 @@ if __name__ == "__main__":
     y = np.array(y).reshape((-1, 1))
 
     folds = helpers.cross_validation_split(10, X, y)
+
+    results = []
 
     for i in range(k_folds):
         X_train = np.array([]).reshape(0, X.shape[1])
@@ -37,13 +39,12 @@ if __name__ == "__main__":
         # predict on one fold
         [X_test, y_test] = folds[i]
 
-    #     classifier = DecisionTreeClassifier()
         classifier = tree_algos.RandomForestClassifier(
             n_estimators=n_estimators, n_features=n_features, max_depth=max_depth)
 
         classifier.fit(X_train, y_train)
 
-        print(classifier)
+        # print(classifier)
 
         predictions = classifier.predict(X_test)
 
@@ -51,3 +52,8 @@ if __name__ == "__main__":
             y_test, predictions)
 
         print(accuracy, precision, recall, fmeasure)
+
+        results.append([accuracy, precision, recall, fmeasure])
+
+    measures = np.sum(np.array(results), axis=0) / len(results)
+    print("Accuracy: {}, Precision: {}, Recall: {}, F1: {}".format(*measures))
