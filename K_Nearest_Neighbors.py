@@ -20,7 +20,18 @@ def getData(fileName):
     for line in lines:
         data.append([float(f) if isFloat(f) else f for f in line])
     
-    # Not clear about what to do for string values.
+    # String value handling
+    for i in range(len(data[0])):
+        if isinstance(data[0][i],str):
+            unique_vals = set([line[i] for line in data])
+            d = {}
+            count = 0
+            for val in unique_vals:
+                d[val] = count
+                count += 1
+            for line in data:
+                line[i] = d.get(line[i])
+
     return data
 
 # Split data into training and validation data.
@@ -78,7 +89,7 @@ def metric_computation(validation_labels,predicted_labels):
         else:
             fn += 1
     
-    accuracy = (tp+tn)/(tp+tn+fp+fn)
+    accuracy = (tp+tn)/(tp+tn+fp+fn) 
     precision = tp/(tp+fp)
     recall = tp/(tp+fn)
     fmeasure = (2*recall*precision)/(recall+precision)
@@ -153,10 +164,10 @@ def kFoldCrossValidation(numFolds,data,K):
         recall_list.append(recall)
         fmeasure_list.append(fmeasure)
     
-    print("Accuracy: ", np.mean(accuracy_list))
-    print("Precision: ", np.mean(precision_list))
-    print("Recall: ", np.mean(recall_list))
-    print("F-measure:  ",np.mean(fmeasure_list))
+    print("Accuracy: ", np.mean(accuracy_list)*100)
+    print("Precision: ", np.mean(precision_list)*100)
+    print("Recall: ", np.mean(recall_list)*100)
+    print("F-measure:  ",np.mean(fmeasure_list)*100)
 
 # Getting input 
 fileName = sys.argv[1]
