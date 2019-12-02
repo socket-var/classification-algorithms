@@ -47,38 +47,40 @@ def metric_computation(validation_labels, predicted_labels):
             fn += 1
 
     accuracy = (tp+tn)/(tp+tn+fp+fn)
-    precision = tp/(tp+fp)
-    recall = tp/(tp+fn)
-    fmeasure = (2*recall*precision)/(recall+precision)
+    try:
+        precision = tp/(tp+fp)
+    except ZeroDivisionError:
+        precision = 0
+
+    try:
+        recall = tp/(tp+fn)
+    except ZeroDivisionError:
+        recall = 0
+
+    try:
+        fmeasure = (2*recall*precision)/(recall+precision)
+    except ZeroDivisionError:
+        fmeasure = 0
 
     return accuracy, precision, recall, fmeasure
 
 
 def cross_validation_split(k, X, y):
 
-    permutation = np.random.permutation(X.shape[0])
-
-    shuffled_X = X[permutation]
-    shuffled_y = y[permutation]
-
-    n = shuffled_X.shape[0] // k
+    n = X.shape[0] // k
+    rem = X.shape[0] % k
 
     folds = []
 
     start = 0
 
     for i in range(k):
-        fold = [shuffled_X[start:start+n], shuffled_y[start:start+n]]
+        if i < rem:
+            end = start+n+1
+        else:
+            end = start+n
+        fold = [X[start:end], y[start:end]]
         folds.append(fold)
-        start = start+n
-
-    rem = shuffled_X.shape[0] % k
-
-    if rem > 0:
-        last_X = folds[-1][0]
-        last_y = folds[-1][1]
-
-        folds[-1][0] = np.concatenate((last_X, shuffled_X[-1:-rem-1:-1]))
-        folds[-1][1] = np.concatenate((last_y, shuffled_y[-1:-rem-1:-1]))
+        start = end
 
     return folds

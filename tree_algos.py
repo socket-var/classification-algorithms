@@ -25,7 +25,7 @@ class Question:
         if isinstance(self.value, float):
             condition = ">="
 
-        return "Is %s %s %s?" % (self.column, condition, str(self.value))
+        return "Is feature %s %s %s?" % (self.column, condition, str(self.value))
 
 
 class DecisionTreeClassifier:
@@ -57,10 +57,10 @@ class DecisionTreeClassifier:
         if self.max_depth and level == self.max_depth:
             return
 
-        best_gain, best_question = self._best_split(subset)
+        best_gain, best_question, best_gini = self._best_split(subset)
 
         if best_gain == 0:
-            return self._make_leaf_node(subset)
+            return self._make_leaf_node(best_gini, best_gain, subset)
 
         true_set, false_set = self._partition(subset, best_question)
 
@@ -68,11 +68,11 @@ class DecisionTreeClassifier:
 
         false_branch = self._make_tree(false_set, level+1)
 
-        return self._make_decision_node(best_question, true_branch, false_branch)
+        return self._make_decision_node(best_gini, best_gain, best_question, true_branch, false_branch)
 
     def _best_split(self, subset):
 
-        best_gain = 0
+        best_gain = best_gini = 0
         best_question = None
         selected_cols = set()
 
@@ -110,10 +110,10 @@ class DecisionTreeClassifier:
                         true_subset, false_subset, curr_gini)
 
                     if curr_gain >= best_gain:
-                        best_gain, best_question = curr_gain, curr_question
+                        best_gain, best_question, best_gini = curr_gain, curr_question, curr_gini
                         selected_cols.add(col)
 
-        return best_gain, best_question
+        return best_gain, best_question, best_gini
 
     def _partition(self, subset, question):
 
@@ -137,7 +137,7 @@ class DecisionTreeClassifier:
             else:
                 return self._classify(row, node["false_branch"])
 
-    def _make_leaf_node(self, subset):
+    def _make_leaf_node(self, gini, gain, subset):
 
         unique, counts = np.unique(np.array(subset)[:, -1], return_counts=True)
 
@@ -145,16 +145,20 @@ class DecisionTreeClassifier:
 
         return {
             "type": "leaf",
-            "prediction": float(unique[m])
+            "prediction": float(unique[m]),
+            "gini": gini,
+            "gain": gain
         }
 
-    def _make_decision_node(self, question, true_branch, false_branch):
+    def _make_decision_node(self, gini, gain, question, true_branch, false_branch):
 
         return {
             "type": "decision",
             "question": question,
             "true_branch": true_branch,
-            "false_branch": false_branch
+            "false_branch": false_branch,
+            "gini": gini,
+            "gain": gain
         }
 
     def __repr__(self):
@@ -174,7 +178,8 @@ class DecisionTreeClassifier:
                     depth*'-', node["prediction"]))
                 return
 
-            tree_repr.append("{}> {}".format(depth*'-', node["question"]))
+            tree_repr.append("{}> {} Gini: {} Gain: {}".format(
+                depth*'-', node["question"], node["gini"], node["gain"]))
 
             self._print_tree_recursive(node['true_branch'], tree_repr, depth+1)
             self._print_tree_recursive(
@@ -215,7 +220,6 @@ class RandomForestClassifier:
 
             predictions.append(pred)
 
-        # TODO: do mode calculation from scratch
         return np.array(mode(np.array(predictions), axis=0)).flatten()
 
     def _get_bootstrap_set(self, data, dataset_length):

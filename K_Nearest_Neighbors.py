@@ -89,6 +89,7 @@ def metric_computation(validation_labels,predicted_labels):
         else:
             fn += 1
     
+    print(tp,fp,tn,fn)
     accuracy = (tp+tn)/(tp+tn+fp+fn) 
     precision = tp/(tp+fp)
     recall = tp/(tp+fn)
@@ -120,6 +121,10 @@ def knn_metrics(training_data,validation_data,K):
     dataset = [line[0:-1] for line in training_data]
     training_labels = [line[-1] for line in training_data]
     validation_labels = [line[-1] for line in validation_data]
+    print("Training labels")
+    print(training_labels)
+    print("Validation labels")
+    print(validation_labels)
     predicted_labels = []
     # mean = np.mean(dataset,axis=0)
     # std_deviation = np.std(dataset,axis=0)
@@ -131,6 +136,7 @@ def knn_metrics(training_data,validation_data,K):
         training_max_vals.append(max(row))
     
     normalized_training_data = normalizeData(training_min_vals,training_max_vals,dataset,training_labels)
+    
     # print("Normalized")
     # print(normalized_training_data)
     validation_min_vals = []
@@ -139,40 +145,50 @@ def knn_metrics(training_data,validation_data,K):
     for row in validation_data_temp:
         validation_min_vals.append(min(row))
         validation_max_vals.append(max(row))
-
+    
+    print(validation_data)
     for i in range(len(validation_data)):
         label = compute_knn(normalized_training_data,validation_data[i],validation_min_vals,validation_max_vals,K)
         predicted_labels.append(label)
+    print("Predicted Labels")
+    print(predicted_labels)
     
     accuracy,precision,recall,fmeasure = metric_computation(validation_labels,predicted_labels)
     return accuracy,precision,recall,fmeasure
 
 # k-fold cross validation for averaging the results from randomization.
-def kFoldCrossValidation(numFolds,data,K):
-    foldSize = len(data)/numFolds
-    accuracy_list = []
-    precision_list = []
-    recall_list = []
-    fmeasure_list = []
-    index = 0
-    for i in range(numFolds):
-        training_data,validation_data = splitData(index,data,foldSize)
-        index += foldSize
-        accuracy,precision,recall,fmeasure = knn_metrics(training_data,validation_data,K)
-        accuracy_list.append(accuracy)
-        precision_list.append(precision)
-        recall_list.append(recall)
-        fmeasure_list.append(fmeasure)
+def kFoldCrossValidation(numFolds,data1,data2,K):
+    # foldSize = len(data)/numFolds
+    # accuracy_list = []
+    # precision_list = []
+    # recall_list = []
+    # fmeasure_list = []
+    # index = 0
+    # for i in range(numFolds):
+    #     training_data,validation_data = splitData(index,data,foldSize)
+    #     index += foldSize
+    #     accuracy,precision,recall,fmeasure = knn_metrics(training_data,validation_data,K)
+    #     accuracy_list.append(accuracy)
+    #     precision_list.append(precision)
+    #     recall_list.append(recall)
+    #     fmeasure_list.append(fmeasure)
     
-    print("Accuracy: ", np.mean(accuracy_list)*100)
-    print("Precision: ", np.mean(precision_list)*100)
-    print("Recall: ", np.mean(recall_list)*100)
-    print("F-measure:  ",np.mean(fmeasure_list)*100)
+    accuracy,precision,recall,fmeasure = knn_metrics(data1,data2,K)
+    # print("Accuracy: ", np.mean(accuracy_list)*100)
+    # print("Precision: ", np.mean(precision_list)*100)
+    # print("Recall: ", np.mean(recall_list)*100)
+    # print("F-measure:  ",np.mean(fmeasure_list)*100)
+    print("Accuracy: ", accuracy*100)
+    print("Precision: ", precision*100)
+    print("Recall: ", recall*100)
+    print("F-measure:  ",fmeasure*100)
 
 # Getting input 
 fileName = sys.argv[1]
-numOfFolds = int(sys.argv[2])
-K = int(sys.argv[3])
-data = getData(fileName)
-kFoldCrossValidation(numOfFolds,data,K)
+testName = sys.argv[2]
+numOfFolds = int(sys.argv[3])
+K = int(sys.argv[4])
+data1 = getData(fileName)
+data2 = getData(testName)
+kFoldCrossValidation(numOfFolds,data1,data2,K)
 
