@@ -5,6 +5,18 @@ import numpy as np
 
 if __name__ == "__main__":
 
+<<<<<<< HEAD
+    # file_name = input("Enter the dataset file name: ")
+    # n_estimators = input("Enter number of trees in the forest: ")
+    # n_features = input("Enter number of features to be randomly selected: ")
+    # max_depth = input("Enter maximum depth of the trees: ")
+    # k_folds = input("Enter numbe rof folds for validation: ")
+
+    n_estimators = 3
+    n_features = None
+    max_depth = None
+    k_folds = 10
+=======
     file_name = input("Enter the dataset file name: ")
     n_estimators = input("Enter number of trees in the forest: ")
     n_features = input("Enter number of features to be randomly selected: ")
@@ -30,6 +42,7 @@ if __name__ == "__main__":
         k_folds = int(k_folds)
     else:
         k_folds = 10
+>>>>>>> 10355750f287b756b9a15abbf09df296ac70ca26
 
     X, y, _ = helpers.import_txt(file_name)
 
