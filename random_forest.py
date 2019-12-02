@@ -11,7 +11,6 @@ if __name__ == "__main__":
     # max_depth = input("Enter maximum depth of the trees: ")
     # k_folds = input("Enter numbe rof folds for validation: ")
 
-    file_name = "project3_dataset1.txt"
     n_estimators = 3
     n_features = None
     max_depth = None

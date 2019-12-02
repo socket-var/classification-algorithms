@@ -9,8 +9,6 @@ if __name__ == "__main__":
     # n_features = input("Enter number of features to be randomly selected: ")
     # max_depth = input("Enter maximum depth of the trees: ")
     # k_folds = input("Enter numbe rof folds for validation: ")
-
-    file_name = "project3_dataset2.txt"
     n_features = None
     max_depth = None
     k_folds = 10
