@@ -6,7 +6,7 @@ import numpy as np
 if __name__ == "__main__":
 
     file_name = input("Enter the dataset file name: ")
-    n_features = input("Enter number of features to be randomly selected: ")
+    n_features = input("Enter number of features to be selected: ")
     max_depth = input("Enter maximum depth of the trees: ")
     k_folds = input("Enter number of folds for validation: ")
     do_print = input("Do you want to print the tree? [y/N]: ")
@@ -81,6 +81,8 @@ if __name__ == "__main__":
             n_features=n_features, max_depth=max_depth)
 
         classifier.fit(X, y)
+
+        print(classifier)
 
         test_file_name = input("Enter the test dataset filename: ")
 
