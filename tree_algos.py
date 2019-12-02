@@ -199,7 +199,6 @@ class RandomForestClassifier:
 
         for _ in range(self.n_estimators):
 
-            # TODO: don't hardcode bootstrap size
             data = np.concatenate((X, y), axis=1)
 
             if self.n_bootstrap:

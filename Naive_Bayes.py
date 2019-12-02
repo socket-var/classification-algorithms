@@ -127,16 +127,18 @@ def kFoldCrossValidation(numFolds,data,columnLabels):
         prediction,groundTruth = predictClass(normalizedTrainingData,normalizedValidationData,positivePrior,negativePrior,posteriorPositiveMean,posteriorNegativeMean,posteriorPositiveStd,posteriorNegativeStd,columnLabels,classColumn)
         #print(prediction)
         #print(groundTruth)
-        accuracy,precision,recall,fmeasure = metric_computation(groundTruth,prediction)
+        accuracy = metric_computation(groundTruth,prediction)
+        #,precision
+        #,recall,fmeasure = metric_computation(groundTruth,prediction)
         accuracy_list.append(accuracy)
-        precision_list.append(precision)
-        recall_list.append(recall)
-        fmeasure_list.append(fmeasure)
+        #precision_list.append(precision)
+        #recall_list.append(recall)
+        #fmeasure_list.append(fmeasure)
         #print(accuracy,precision,recall,fmeasure)
     print("Accuracy: ", np.mean(accuracy_list))
-    print("Precision: ", np.mean(precision_list))
-    print("Recall: ", np.mean(recall_list))
-    print("F-measure:  ",np.mean(fmeasure_list))
+    #print("Precision: ", np.mean(precision_list))
+    #print("Recall: ", np.mean(recall_list))
+    #print("F-measure:  ",np.mean(fmeasure_list))
 
 # Predicts the class depending on probability
 def predictClass(Tdata,Vdata,pPrior,nPrior,pMean,nMean,pStd,nStd,columnLabels,classColumn):
@@ -214,10 +216,10 @@ def metric_computation(validation_labels,predicted_labels):
             fn += 1
     
     accuracy = (tp+tn)/(tp+tn+fp+fn)
-    precision = tp/(tp+fp)
-    recall = tp/(tp+fn)
-    fmeasure = (2*recall*precision)/(recall+precision)
-    return accuracy,precision,recall,fmeasure
+    #precision = tp/(tp+fp)
+    #recall = tp/(tp+fn)
+    #fmeasure = (2*recall*precision)/(recall+precision)
+    return accuracy#,precision,recall,fmeasure
 
 filename = sys.argv[1]
 numFolds = int(sys.argv[2])

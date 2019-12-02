@@ -10,6 +10,7 @@ if __name__ == "__main__":
     n_features = input("Enter number of features to be randomly selected: ")
     max_depth = input("Enter maximum depth of the trees: ")
     k_folds = input("Enter number of folds for validation: ")
+    n_bootstrap = input("Enter the size of the bootstrap dataset: ")
 
     if n_estimators:
         n_estimators = int(n_estimators)
@@ -30,6 +31,11 @@ if __name__ == "__main__":
         k_folds = int(k_folds)
     else:
         k_folds = 10
+
+    if n_bootstrap:
+        n_bootstrap = int(n_bootstrap)
+    else:
+        n_bootstrap = None
 
     X, y, _ = helpers.import_txt(file_name)
 
@@ -54,7 +60,7 @@ if __name__ == "__main__":
         [X_test, y_test] = folds[i]
 
         classifier = tree_algos.RandomForestClassifier(
-            n_estimators=n_estimators, n_features=n_features, max_depth=max_depth)
+            n_estimators=n_estimators, n_features=n_features, max_depth=max_depth, n_bootstrap=n_bootstrap)
 
         classifier.fit(X_train, y_train)
 
@@ -77,7 +83,7 @@ if __name__ == "__main__":
     if do_test.lower() == "y":
 
         classifier = tree_algos.RandomForestClassifier(
-            n_estimators=n_estimators, n_features=n_features, max_depth=max_depth)
+            n_estimators=n_estimators, n_features=n_features, max_depth=max_depth, n_bootstrap=n_bootstrap)
 
         classifier.fit(X, y)
 
