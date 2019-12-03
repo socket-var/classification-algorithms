@@ -97,57 +97,38 @@ def calculatePosteriorStandardDeviation(normalizedData,posteriorPositiveMean,pos
     return posteriorPositiveStd,posteriorNegativeStd
 
 # k-fold cross validation for averaging the results from randomization.
-def kFoldCrossValidation(numFolds,data,columnLabels):
-    foldSize = int(len(data)/numFolds)
+def computeClassProbabilities(numFolds,data,columnLabels,training_data,validation_data):
+    #foldSize = int(len(data)/numFolds)
     accuracy_list = []
     precision_list = []
     recall_list = []
     fmeasure_list = []
     index = 0
     for i in range(numFolds):
-        training_data,validation_data = splitData(index,data,foldSize)
-        index += foldSize
-        norm_max = []
-        norm_min = []
-        for i in range(0,len(columnLabels)):
-            if(columnLabels[i] == "Numerical"):
-                temp = [row[i] for row in training_data]
-                norm_min.append(min(temp))
-                norm_max.append(max(temp))
-            else:
-                norm_min.append("Categorical")
-                norm_max.append("Categorical")
-        #normalizedTrainingData = normalizeData(training_data,norm_min,norm_max,columnLabels)
-        #normalizedValidationData = normalizeData(validation_data,norm_min,norm_max,columnLabels)
         normalizedTrainingData = training_data
         normalizedValidationData = validation_data
+        descriptor_probability = calculateDescriptorProbability(normalizedTrainingData,normalizedValidationData)
+        #print("Descriptor probability")
+        #print(descriptor_probability)
         positivePrior,negativePrior,classColumn = calculatePriorProbability(normalizedTrainingData)
         posteriorPositiveMean,posteriorNegativeMean = calculatePosteriorMean(normalizedTrainingData,columnLabels,classColumn)
         posteriorPositiveStd,posteriorNegativeStd = calculatePosteriorStandardDeviation(normalizedTrainingData,posteriorPositiveMean,posteriorNegativeMean,columnLabels,classColumn)
-        prediction,groundTruth = predictClass(normalizedTrainingData,normalizedValidationData,positivePrior,negativePrior,posteriorPositiveMean,posteriorNegativeMean,posteriorPositiveStd,posteriorNegativeStd,columnLabels,classColumn)
-        #print(prediction)
-        #print(groundTruth)
-        accuracy,precision,recall,fmeasure = metric_computation(groundTruth,prediction)
-        accuracy_list.append(accuracy)
-        precision_list.append(precision)
-        recall_list.append(recall)
-        fmeasure_list.append(fmeasure)
-        #print(accuracy,precision,recall,fmeasure)
-    print("Accuracy: ", np.mean(accuracy_list))
-    print("Precision: ", np.mean(precision_list))
-    print("Recall: ", np.mean(recall_list))
-    print("F-measure:  ",np.mean(fmeasure_list))
+        prediction,groundTruth = predictClass(normalizedTrainingData,normalizedValidationData,positivePrior,negativePrior,posteriorPositiveMean,posteriorNegativeMean,posteriorPositiveStd,posteriorNegativeStd,columnLabels,classColumn,descriptor_probability)
+        print(prediction)
 
 # Predicts the class depending on probability
-def predictClass(Tdata,Vdata,pPrior,nPrior,pMean,nMean,pStd,nStd,columnLabels,classColumn):
+def predictClass(Tdata,Vdata,pPrior,nPrior,pMean,nMean,pStd,nStd,columnLabels,classColumn,descriptor_probability):
     groundTruth = []
     prediction = []
-    #print(Tdata[0])
+    #print(Tdata[0])lhhhhjkkbb
     for i in range(0,len(Vdata)):
         groundTruth.append(Vdata[i][-1])
         query = Vdata[i][0:-1]
-        positiveClassProbability = calculateClassConditionalProbability(query,Tdata,pPrior,pMean,pStd,columnLabels,classColumn,1)
-        negativeClassProbability = calculateClassConditionalProbability(query,Tdata,nPrior,nMean,nStd,columnLabels,classColumn,0)
+        #print("descriptor_probability "+str(descriptor_probability[i]))
+        positiveClassProbability = calculateClassConditionalProbability(query,Tdata,pPrior,pMean,pStd,columnLabels,classColumn,1,descriptor_probability[i])
+        negativeClassProbability = calculateClassConditionalProbability(query,Tdata,nPrior,nMean,nStd,columnLabels,classColumn,0,descriptor_probability[i])
+        print("Postive and negative class probabilities")
+        print(positiveClassProbability,negativeClassProbability)
         if(positiveClassProbability>= negativeClassProbability):
             prediction.append(1.0)
         else:
@@ -155,7 +136,7 @@ def predictClass(Tdata,Vdata,pPrior,nPrior,pMean,nMean,pStd,nStd,columnLabels,cl
     return prediction,groundTruth
 
 # Calculates class Conditional probability for given class
-def calculateClassConditionalProbability(query,Tdata,prior,postMean,postStd,columnLabels,classColumn,classFlag):
+def calculateClassConditionalProbability(query,Tdata,prior,postMean,postStd,columnLabels,classColumn,classFlag,desc_prob):
     posteriorProbabilities = []
     for i in range(0,len(query)):
         if(columnLabels[i] == "Numerical"):
@@ -165,10 +146,13 @@ def calculateClassConditionalProbability(query,Tdata,prior,postMean,postStd,colu
             for j in range(0,len(Tdata)):
                 trainColumn.append(Tdata[j][i])
             posteriorProbabilities.append(calculateCategoricalProbability(query[i],trainColumn,classColumn,classFlag))
+    #print("Posterior probalbilities for class "+str(classFlag))
     #print(posteriorProbabilities)
     prob = prior
+    #/desc_prob
     for i in range(0,len(posteriorProbabilities)):
         prob = prob*posteriorProbabilities[i]
+    prob = prob
     return prob
 
 # Calculates Posterior probability for Numercial column values
@@ -185,6 +169,8 @@ def calculateCategoricalProbability(columnVal,trainColumn,classColumn,catFlag):
     count = 0
     totalCount = 0
     uniq_col_values = len(set(trainColumn))
+    #print(trainColumn)
+    #print(uniq_col_values)
     for i in range(0,len(classColumn)):
         if(classColumn[i] == catFlag):
             totalCount+=1
@@ -222,6 +208,25 @@ def metric_computation(validation_labels,predicted_labels):
     fmeasure = (2*recall*precision)/(recall+precision)
     return accuracy,precision,recall,fmeasure
 
+def calculateDescriptorProbability(training_data,validation_data):
+    #print(training_data)
+    probs = []
+    column = []
+    prob = 1
+    for i in range(0,len(validation_data)):
+        for j in range(0,len(validation_data[i])-1):
+            for row in training_data:
+                column.append(row[j])
+            count = 0
+            for val in column:
+                if(val == validation_data[i][j]):
+                    count+=1
+            prob*=count/len(training_data)
+            column = []
+        probs.append(prob)
+        prob = 1
+    return probs
+
 filename = sys.argv[1]
 numFolds = int(sys.argv[2])
 data = []
@@ -244,4 +249,13 @@ for i in range(0,len(sampleData)-1):
         columnLabels.append("Numerical")
 columnLabels.append("Class")
 
-kFoldCrossValidation(numFolds,data,columnLabels)
+validation_data = [["overcast","mild","normal","weak",0.0]]
+
+#Initial implementation code
+computeClassProbabilities(numFolds,data,columnLabels,data,validation_data)
+
+
+# print(columnLabels)
+# print(data)
+
+        
