@@ -2,6 +2,18 @@ K-nn:
 
 Naive Bayes:
 
+$ python3 Naive_Bayes.py project3_dataset1.txt 10
+Accuracy:  0.9357142857142857
+Precision:  0.9241315440217042
+Recall:  0.9053435453435454
+F-measure:   0.9132090522262688
+
+$ python3 Naive_Bayes.py project3_dataset2.txt 10
+Accuracy:  0.7021739130434783
+Precision:  0.5707868713673667
+Recall:  0.617493091703618
+F-measure:   0.5842003761632244
+
 Decision Tree:
 
 $ python decision_tree.py
