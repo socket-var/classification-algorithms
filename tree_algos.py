@@ -178,8 +178,8 @@ class DecisionTreeClassifier:
                     depth*'-', node["prediction"]))
                 return
 
-            tree_repr.append("{}> {} Gini: {} Gain: {}".format(
-                depth*'-', node["question"], node["gini"], node["gain"]))
+            tree_repr.append("{}> {} Gain: {}".format(
+                depth*'-', node["question"], node["gain"]))
 
             self._print_tree_recursive(node['true_branch'], tree_repr, depth+1)
             self._print_tree_recursive(
