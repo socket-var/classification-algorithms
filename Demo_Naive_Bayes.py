@@ -249,7 +249,7 @@ for i in range(0,len(sampleData)-1):
         columnLabels.append("Numerical")
 columnLabels.append("Class")
 
-validation_data = [["sunny","cool","high","weak",0.0],["overcast","hot" ,"normal","weak",1]]
+validation_data = [["overcast","mild","normal","weak",0.0]]
 
 #Initial implementation code
 computeClassProbabilities(numFolds,data,columnLabels,data,validation_data)
