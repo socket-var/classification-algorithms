@@ -1,5 +1,9 @@
 K-nn:
 
+$ python K_Nearest_Neighbors.py project3_dataset1.txt 10 5
+
+$ python K_Nearest_Neighbors_Demo.py project3_dataset3_train.txt project3_dataset3_test.txt 5
+
 Naive Bayes:
 
 $ python3 Naive_Bayes.py project3_dataset1.txt 10
