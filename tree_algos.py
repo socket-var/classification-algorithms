@@ -188,19 +188,25 @@ class DecisionTreeClassifier:
 
 class RandomForestClassifier:
 
-    def __init__(self, n_estimators=1, n_features=None, max_depth=None):
+    def __init__(self, n_estimators=1, n_features=None, max_depth=None, n_bootstrap=None):
         self.n_estimators = n_estimators
         self.n_features = n_features
         self.max_depth = max_depth
+        self.n_bootstrap = n_bootstrap
         self.trees = []
 
     def fit(self, X, y):
 
         for _ in range(self.n_estimators):
 
-            # TODO: don't hardcode bootstrap size
             data = np.concatenate((X, y), axis=1)
-            data_bootstrapped = self._get_bootstrap_set(data, data.shape[0])
+
+            if self.n_bootstrap:
+                size = self.n_bootstrap
+            else:
+                size = data.shape[0]
+
+            data_bootstrapped = self._get_bootstrap_set(data, size)
 
             X_bootstrapped, y_bootstrapped = data_bootstrapped[:,
                                                                :-1], data_bootstrapped[:, -1].reshape((-1, 1))
